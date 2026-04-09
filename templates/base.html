@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StudentShelf{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!--
+        url_for('static', filename='css/style.css') is Flask's way of
+        generating the correct path to your static files.
+        Never hardcode paths like /static/css/style.css — Flask handles it.
+    -->
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="{{ url_for('home') }}" class="nav-brand">📚 StudentShelf</a>
+        <div class="nav-links">
+            <a href="{{ url_for('products') }}">Browse</a>
+            <!--
+                session is a Flask object that stores logged-in user info.
+                We check if 'user_id' exists in the session to decide
+                which links to show.
+            -->
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('add_product') }}">Sell Item</a>
+                <a href="{{ url_for('view_requests') }}">
+                    Requests
+                    {% if pending_count > 0 %}
+                        <span class="badge">{{ pending_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('my_requests') }}">My Requests</a>
+                <a href="{{ url_for('history') }}">History</a>
+                <a href="{{ url_for('profile') }}">
+                    {{ session.get('user_name') }}
+                </a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- FLASH MESSAGES -->
+    <!--
+        Flash messages are one-time notifications Flask sends to the user.
+        Example: "Login successful!" or "Wrong password."
+        They disappear after being shown once.
+    -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- PAGE CONTENT -->
+    <!-- Each page fills in this block with its own content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>StudentShelf &copy; 2024 — MIT Bengaluru, CSE(AI)</p>
+    </footer>
+
+</body>
+</html>

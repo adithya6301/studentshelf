@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+
+    <!-- User Info Card -->
+    <div class="profile-card">
+        <div class="profile-avatar">
+            {{ session.get('user_name')[0].upper() }}
+        </div>
+        <div class="profile-info">
+            <h2>{{ session.get('user_name') }}</h2>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="trust-score-display">
+                Trust Score: <strong>{{ user.trust_score }} ⭐</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- User's Listings -->
+    <div class="profile-listings">
+        <h3>My Listings ({{ listings|length }})</h3>
+
+        {% if listings %}
+            <div class="product-grid">
+                {% for product in listings %}
+                    <div class="product-card">
+                        <div class="product-category">
+                            {{ product.category_name }}
+                        </div>
+                        <span class="status-badge status-{{ product.status|lower }}">
+                            {{ product.status }}
+                        </span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <div class="product-footer">
+                            <span class="product-price">
+                                ₹{{ "%.2f"|format(product.price) }}
+                            </span>
+                        </div>
+                        <div class="product-actions">
+                            <a href="{{ url_for('edit_product', product_id=product.product_id) }}"
+                               class="btn btn-outline btn-sm">Edit</a>
+                            <a href="{{ url_for('delete_product', product_id=product.product_id) }}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Delete this listing?')">
+                               Delete
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>You haven't listed anything yet.</p>
+                <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+                    List your first item
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

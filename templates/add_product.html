@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Sell an Item — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card" style="max-width: 550px;">
+        <h2>List an Item</h2>
+        <p class="auth-subtitle">Fill in the details of what you're selling</p>
+
+        <form method="POST" action="">
+            <div class="form-group">
+                <label for="name">Item Name</label>
+                <input type="text" id="name" name="name"
+                       placeholder="e.g. Engineering Mathematics Vol. 2"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    <option value="">Select a category</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.category_id }}">
+                            {{ cat.category_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description"
+                          rows="4"
+                          placeholder="Condition, edition, any notes...">
+                </textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price (₹)</label>
+                <input type="number" id="price" name="price"
+                       min="1" step="0.01"
+                       placeholder="e.g. 250" required>
+            </div>
+
+            <!--
+                Stock = how many copies the seller has.
+                e.g. a seller with 3 identical calculators sets stock = 3
+                They can then accept up to 3 interest requests.
+            -->
+            <div class="form-group">
+                <label for="stock">Stock (How many do you have?)</label>
+                <input type="number" id="stock" name="stock"
+                       min="1" value="1" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Post Listing
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

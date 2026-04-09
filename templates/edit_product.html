@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Listing — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card" style="max-width: 550px;">
+        <h2>Edit Listing</h2>
+        <p class="auth-subtitle">Update your item details</p>
+
+        <form method="POST" action="">
+            <div class="form-group">
+                <label for="name">Item Name</label>
+                <input type="text" id="name" name="name"
+                       value="{{ product.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    {% for cat in categories %}
+                        <option value="{{ cat.category_id }}"
+                            {% if cat.category_id == product.category_id %}
+                                selected
+                            {% endif %}>
+                            {{ cat.category_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description"
+                          rows="4">{{ product.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price (₹)</label>
+                <input type="number" id="price" name="price"
+                       min="1" step="0.01"
+                       value="{{ product.price }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" name="stock"
+                       min="1" value="{{ product.stock }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="Available"
+                        {% if product.status == 'Available' %}selected{% endif %}>
+                        Available
+                    </option>
+                    <option value="Sold"
+                        {% if product.status == 'Sold' %}selected{% endif %}>
+                        Sold
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Save Changes
+            </button>
+            <a href="{{ url_for('products') }}"
+               class="btn btn-outline btn-full"
+               style="margin-top: 0.5rem; text-align:center; display:block;">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

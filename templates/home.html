@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Home — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Your Campus Marketplace</h1>
+    <p>Buy and sell used textbooks, calculators, and lab equipment
+       within your college community.</p>
+    <div class="hero-buttons">
+        <a href="{{ url_for('products') }}" class="btn btn-primary">
+            Browse Items
+        </a>
+        {% if not session.get('user_id') %}
+            <a href="{{ url_for('register') }}" class="btn btn-outline">
+                Start Selling
+            </a>
+        {% else %}
+            <a href="{{ url_for('add_product') }}" class="btn btn-outline">
+                List an Item
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

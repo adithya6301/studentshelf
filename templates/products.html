@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse — StudentShelf{% endblock %}
+
+{% block content %}
+
+<!-- Search Bar -->
+<div class="search-section">
+    <form method="GET" action="{{ url_for('products') }}">
+        <!--
+            method="GET" puts the search query in the URL:
+            /products?query=calculus&category=1
+            This means users can share/bookmark search results.
+        -->
+        <div class="search-bar">
+            <input
+                type="text"
+                name="query"
+                placeholder="Search for textbooks, calculators..."
+                value="{{ request.args.get('query', '') }}"
+            >
+            <!--
+                request.args.get('query', '') keeps the search
+                text visible in the box after searching.
+            -->
+            <select name="category">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option
+                        value="{{ cat.category_id }}"
+                        {% if request.args.get('category') == cat.category_id|string %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ cat.category_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('products') }}" class="btn btn-outline">
+                Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Results Count -->
+<div class="results-header">
+    <p>
+        {% if products %}
+            {{ products|length }} item(s) available
+        {% else %}
+            No items found
+        {% endif %}
+    </p>
+    {% if session.get('user_id') %}
+        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+            + List an Item
+        </a>
+    {% endif %}
+</div>
+
+<!-- Product Grid -->
+{% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+            <div class="product-card">
+                <div class="product-category">
+                    {{ product.category_name }}
+                </div>
+                <h3 class="product-name">{{ product.name }}</h3>
+                <p class="product-desc">
+                    {{ product.description[:80] }}
+                    {% if product.description|length > 80 %}...{% endif %}
+                </p>
+                <p class="product-stock">📦 {{ product.stock }} left in stock</p>
+                <!--
+                    product.description[:80] shows only the first 80
+                    characters — a preview. Jinja2 supports Python slicing.
+                -->
+                <div class="product-footer">
+                    <span class="product-price">
+                        ₹{{ "%.2f"|format(product.price) }}
+                    </span>
+                    <span class="product-seller">
+                        by {{ product.seller_name }}
+                    </span>
+                </div>
+                <div class="product-actions">
+                    <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
+                       class="btn btn-primary btn-sm">
+                        View Details
+                    </a>
+                    <!--
+                        Only show Edit/Delete to the seller of that item.
+                        session.get('user_id') is the logged-in user's ID.
+                        product.user_id is the seller's ID.
+                    -->
+                    {% if session.get('user_id') == product.user_id %}
+                        <a href="{{ url_for('edit_product', product_id=product.product_id) }}"
+                           class="btn btn-outline btn-sm">
+                            Edit
+                        </a>
+                        <a href="{{ url_for('delete_product', product_id=product.product_id) }}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Delete this listing?')">
+                            Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p>No items listed yet.</p>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+                Be the first to list an item
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% endblock %}

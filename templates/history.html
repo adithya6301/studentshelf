@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <h2>Transaction History</h2>
+    <p class="auth-subtitle">Your buying and selling activity on StudentShelf</p>
+
+    <!-- SOLD section -->
+    <div class="history-section">
+        <h3 class="history-heading sold-heading">Items You Sold</h3>
+
+        {% if sold %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Buyer</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in sold %}
+                        <tr>
+                            <td><strong>{{ t.product_name }}</strong></td>
+                            <td>
+                                <span class="product-category">
+                                    {{ t.category_name }}
+                                </span>
+                            </td>
+                            <td class="product-price">
+                                ₹{{ "%.2f"|format(t.price) }}
+                            </td>
+                            <td>
+                                <!--
+                                    buyer_name can be None if the seller
+                                    manually marked the item sold without
+                                    a specific buyer request
+                                -->
+                                {{ t.buyer_name if t.buyer_name else '—' }}
+                            </td>
+                            <td class="history-date">
+                                {{ t.date.strftime('%d %b %Y') }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>You haven't sold anything yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- BOUGHT section -->
+    <div class="history-section">
+        <h3 class="history-heading bought-heading">Items You Bought</h3>
+
+        {% if bought %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Seller</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in bought %}
+                        <tr>
+                            <td><strong>{{ t.product_name }}</strong></td>
+                            <td>
+                                <span class="product-category">
+                                    {{ t.category_name }}
+                                </span>
+                            </td>
+                            <td class="product-price">
+                                ₹{{ "%.2f"|format(t.price) }}
+                            </td>
+                            <td>{{ t.seller_name }}</td>
+                            <td class="history-date">
+                                {{ t.date.strftime('%d %b %Y') }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>You haven't bought anything yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

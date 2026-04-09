@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}My Requests — StudentShelf{% endblock %}
+
+{% block content %}
+<div class="requests-container">
+    <h2>My Requests</h2>
+    <p class="auth-subtitle">
+        Requests you've sent to sellers
+    </p>
+
+    {% if my_requests %}
+        {% for req in my_requests %}
+            <div class="request-product-block">
+
+                <div class="request-product-header">
+                    <div>
+                        <h3>{{ req.product_name }}</h3>
+                        <span class="product-category">
+                            {{ req.category_name }}
+                        </span>
+                        &nbsp;|&nbsp;
+                        <span class="product-price">
+                            ₹{{ "%.2f"|format(req.price) }}
+                        </span>
+                    </div>
+                    <span class="status-badge
+                        {% if req.status == 'Pending' %}status-pending
+                        {% elif req.status == 'Ongoing' %}status-ongoing
+                        {% elif req.status == 'Completed' %}status-available
+                        {% else %}status-sold{% endif %}">
+                        {{ req.status }}
+                    </span>
+                </div>
+
+                <!-- Seller info always visible -->
+                <div class="contact-row">
+                    <div class="contact-info-item">
+                        <span class="contact-label">Seller</span>
+                        <span class="contact-value">{{ req.seller_name }}</span>
+                    </div>
+
+                    <!--
+                        Phone numbers only visible when status is Ongoing
+                        or Completed — not before seller accepts
+                    -->
+                    {% if req.status in ['Ongoing', 'Completed'] %}
+                        <div class="contact-info-item highlight">
+                            <span class="contact-label">Seller's Phone</span>
+                            <span class="contact-value phone-number">
+                                📞 {{ req.seller_phone if req.seller_phone else 'Not provided' }}
+                            </span>
+                        </div>
+                        <div class="contact-info-item highlight">
+                            <span class="contact-label">Your Phone (shared with seller)</span>
+                            <span class="contact-value phone-number">
+                                📞 {{ buyer_phone if buyer_phone else 'Not provided' }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <div class="contact-info-item">
+                        <span class="contact-label">Requested on</span>
+                        <span class="contact-value">
+                            {{ req.requested_at.strftime('%d %b %Y') }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action based on status -->
+                <div class="request-action">
+                    {% if req.status == 'Pending' %}
+                        <p class="status-note pending-note">
+                            ⏳ Waiting for seller to respond
+                        </p>
+
+                    {% elif req.status == 'Ongoing' %}
+                        <p class="status-note ongoing-note">
+                            🤝 Seller accepted! Contact them to complete the deal.
+                        </p>
+                        <form method="POST"
+                              action="{{ url_for('complete_request', request_id=req.request_id) }}"
+                              style="margin-top: 0.75rem;">
+                            <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Confirm you have received the item?')">
+                                Mark as Received
+                            </button>
+                        </form>
+
+                    {% elif req.status == 'Completed' %}
+                        <p class="status-note completed-note">
+                            ✅ Transaction completed
+                        </p>
+
+                    {% elif req.status == 'Rejected' %}
+                        <p class="status-note rejected-note">
+                            ✗ Seller rejected this request
+                        </p>
+                    {% endif %}
+                </div>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>You haven't sent any requests yet.</p>
+            <a href="{{ url_for('products') }}" class="btn btn-primary">
+                Browse Listings
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
