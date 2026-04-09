@@ -63,32 +63,52 @@
                     </a>
 
                 {% elif session.get('user_id') %}
-                    <!--
-                        BUYER VIEW
-                        already_requested is passed from the route.
-                        If True, buyer already sent a request — show
-                        a disabled button instead.
-                    -->
-                    {% if already_requested %}
-                        <button class="btn btn-outline" disabled>
-                            ✓ Request Sent
-                        </button>
-                        <p class="contact-note">
-                            Your request is pending. The seller will
-                            respond soon.
-                        </p>
-                    {% else %}
-                        <form method="POST"
-                              action="{{ url_for('request_interest', product_id=product.product_id) }}">
-                            <button type="submit" class="btn btn-primary">
-                                I'm Interested
-                            </button>
-                        </form>
-                        <p class="contact-note">
-                            Clicking this sends a request to the seller.
-                            They will accept or reject it.
-                        </p>
-                    {% endif %}
+    {% if request_status == 'Pending' %}
+        <button class="btn btn-outline" disabled>
+            ✓ Request Sent
+        </button>
+        <p class="contact-note">
+            Your request is pending. The seller will respond soon.
+        </p>
+
+    {% elif request_status == 'Ongoing' %}
+        <button class="btn btn-outline" disabled>
+            🤝 Request Accepted
+        </button>
+        <p class="contact-note">
+            Check <a href="{{ url_for('my_requests') }}">My Requests</a>
+            to see seller contact details.
+        </p>
+
+    {% elif request_status == 'Completed' %}
+        <button class="btn btn-outline" disabled>
+            ✅ Purchase Completed
+        </button>
+
+    {% elif request_status == 'Rejected' %}
+        <form method="POST"
+              action="{{ url_for('request_interest', product_id=product.product_id) }}">
+            <button type="submit" class="btn btn-primary">
+                I'm Interested
+            </button>
+        </form>
+        <p class="contact-note" style="color: #e74c3c;">
+            Your previous request was rejected.
+            You can send a new one.
+        </p>
+
+    {% else %}
+        <form method="POST"
+              action="{{ url_for('request_interest', product_id=product.product_id) }}">
+            <button type="submit" class="btn btn-primary">
+                I'm Interested
+            </button>
+        </form>
+        <p class="contact-note">
+            Clicking this sends a request to the seller.
+            They will accept or reject it.
+        </p>
+    {% endif %}
 
                 {% else %}
                     <!-- NOT LOGGED IN -->

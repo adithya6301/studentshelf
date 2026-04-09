@@ -226,19 +226,21 @@ def product_detail(product_id):
         return redirect(url_for('products'))
 
     # Check if the logged-in buyer already sent a request
-    already_requested = False
+    request_status = None
     if session.get('user_id'):
         cursor.execute('''
-            SELECT request_id FROM requests
+            SELECT status FROM requests
             WHERE product_id = %s AND buyer_id = %s
         ''', (product_id, session['user_id']))
-        already_requested = cursor.fetchone() is not None
+        existing = cursor.fetchone()
+        if existing:
+            request_status = existing['status']
 
     cursor.close()
     return render_template(
         'product_detail.html',
         product=product,
-        already_requested=already_requested
+        request_status=request_status
     )
 
 
@@ -484,15 +486,26 @@ def request_interest(product_id):
 
     # Check if buyer already sent a request for this product
     cursor.execute('''
-        SELECT request_id FROM requests
+        SELECT request_id, status FROM requests
         WHERE product_id = %s AND buyer_id = %s
     ''', (product_id, session['user_id']))
     existing = cursor.fetchone()
 
     if existing:
-        flash('You have already sent a request for this item.', 'danger')
-        cursor.close()
-        return redirect(url_for('product_detail', product_id=product_id))
+        if existing['status'] == 'Rejected':
+            # Allow re-request by resetting status back to Pending
+            cursor.execute('''
+                UPDATE requests SET status = 'Pending'
+                WHERE product_id = %s AND buyer_id = %s
+            ''', (product_id, session['user_id']))
+            mysql.connection.commit()
+            cursor.close()
+            flash('Your interest has been re-sent to the seller!', 'success')
+            return redirect(url_for('product_detail', product_id=product_id))
+        else:
+            flash('You have already sent a request for this item.', 'danger')
+            cursor.close()
+            return redirect(url_for('product_detail', product_id=product_id))
 
     # Create the request
     cursor.execute('''
@@ -558,16 +571,7 @@ def view_requests():
 
         if pid not in grouped:
             # Count how many requests for this product are Accepted
-            cursor.execute('''
-                SELECT COUNT(*) AS accepted_count
-                FROM requests
-                WHERE product_id = %s AND status IN ('Ongoing', 'Completed')
-            ''', (pid,))
-            count_row = cursor.fetchone()
-            accepted_count = count_row['accepted_count']
-
-            # Remaining slots = total stock - already accepted
-            remaining = req['stock'] - accepted_count
+            remaining = req['stock']  # stock is already decremented on each accept
 
             grouped[pid] = {
                 'product': {
@@ -624,18 +628,10 @@ def accept_request(request_id):
         return redirect(url_for('view_requests'))
 
     # Count how many requests already accepted for this product
-    cursor.execute('''
-        SELECT COUNT(*) AS accepted_count FROM requests
-        WHERE product_id = %s AND status IN ('Ongoing', 'Completed')
-    ''', (req['product_id'],))
-    accepted_count = cursor.fetchone()['accepted_count']
-
-    # Check if stock allows one more acceptance
-    if accepted_count >= req['stock']:
+    if req['stock'] <= 0:
         flash(
-            'You have already accepted the maximum number of requests '
-            'for this item based on your stock.',
-            'danger'
+        'No stock remaining for this item.',
+        'danger'
         )
         cursor.close()
         return redirect(url_for('view_requests'))
@@ -667,7 +663,7 @@ def accept_request(request_id):
     ''', (session['user_id'],))
 
     # ── If accepted count + 1 reaches stock, mark product Sold ──
-    if accepted_count + 1 >= req['stock']:
+    if req['stock'] - 1 <= 0:
         cursor.execute('''
             UPDATE products SET status = 'Sold'
             WHERE product_id = %s
