@@ -39,6 +39,16 @@
                         <span class="contact-label">Seller</span>
                         <span class="contact-value">{{ req.seller_name }}</span>
                     </div>
+                    <div class="contact-info-item">
+                        <span class="contact-label">Quantity Requested</span>
+                        <span class="contact-value"><strong>{{ req.quantity }}</strong></span>
+                    </div>
+                    <div class="contact-info-item highlight">
+                        <span class="contact-label">Total Price</span>
+                        <span class="contact-value phone-number">
+                            ₹{{ "%.2f"|format(req.price * req.quantity) }}
+                        </span>
+                    </div>
 
                     <!--
                         Phone numbers only visible when status is Ongoing

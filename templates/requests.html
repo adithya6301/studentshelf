@@ -44,6 +44,7 @@
                         <thead>
                             <tr>
                                 <th>Buyer Name</th>
+                                <th>Quantity</th>
                                 <th>Requested On</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -53,6 +54,12 @@
                             {% for req in data.requests %}
                                 <tr class="request-row-{{ req.status|lower }}">
                                     <td>{{ req.buyer_name }}</td>
+                                    <td>
+                                        <strong>{{ req.quantity }}</strong>
+                                        <span span style="font-size:0.78rem; color:var(--text-light); display:block;">
+                                            ₹{{ "%.2f"|format(req.price * req.quantity) }}
+                                        </span>
+                                    </td>
                                     <td>
                                         {{ req.requested_at.strftime('%d %b %Y, %I:%M %p') }}
                                     </td>

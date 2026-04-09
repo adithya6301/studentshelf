@@ -492,12 +492,24 @@ def request_interest(product_id):
     existing = cursor.fetchone()
 
     if existing:
-        if existing['status'] == 'Rejected':
-            # Allow re-request by resetting status back to Pending
+        if existing['status'] in ['Rejected', 'Completed']:
+            quantity = int(request.form.get('quantity', 1))
+
+            if quantity < 1:
+                flash('Quantity must be at least 1.', 'danger')
+                cursor.close()
+                return redirect(url_for('product_detail', product_id=product_id))
+
+            if quantity > product['stock']:
+                flash(f"Only {product['stock']} unit(s) available.", 'danger')
+                cursor.close()
+                return redirect(url_for('product_detail', product_id=product_id))
+
+            # Reset the existing request back to Pending with new quantity
             cursor.execute('''
-                UPDATE requests SET status = 'Pending'
+                UPDATE requests SET status = 'Pending', quantity = %s
                 WHERE product_id = %s AND buyer_id = %s
-            ''', (product_id, session['user_id']))
+            ''', (quantity, product_id, session['user_id']))
             mysql.connection.commit()
             cursor.close()
             flash('Your interest has been re-sent to the seller!', 'success')
@@ -508,10 +520,25 @@ def request_interest(product_id):
             return redirect(url_for('product_detail', product_id=product_id))
 
     # Create the request
+    # Read quantity from form, default to 1
+    quantity = int(request.form.get('quantity', 1))
+
+    # Validate quantity doesn't exceed available stock
+    if quantity < 1:
+        flash('Quantity must be at least 1.', 'danger')
+        cursor.close()
+        return redirect(url_for('product_detail', product_id=product_id))
+
+    if quantity > product['stock']:
+        flash(f"Only {product['stock']} unit(s) available.", 'danger')
+        cursor.close()
+        return redirect(url_for('product_detail', product_id=product_id))
+
+    # Create the request with quantity
     cursor.execute('''
-        INSERT INTO requests (product_id, buyer_id)
-        VALUES (%s, %s)
-    ''', (product_id, session['user_id']))
+        INSERT INTO requests (product_id, buyer_id, quantity)
+        VALUES (%s, %s, %s)
+    ''', (product_id, session['user_id'], quantity))
 
     mysql.connection.commit()
     cursor.close()
@@ -539,6 +566,7 @@ def view_requests():
             r.status,
             r.requested_at,
             r.product_id,
+            r.quantity,
             u.name      AS buyer_name,
             u.phone     AS buyer_phone,
             p.name      AS product_name,
@@ -628,10 +656,17 @@ def accept_request(request_id):
         return redirect(url_for('view_requests'))
 
     # Count how many requests already accepted for this product
+    # Check if enough stock exists for the requested quantity
     if req['stock'] <= 0:
+        flash('No stock remaining for this item.', 'danger')
+        cursor.close()
+        return redirect(url_for('view_requests'))
+
+    if req['quantity'] > req['stock']:
         flash(
-        'No stock remaining for this item.',
-        'danger'
+            f"Not enough stock. Buyer requested {req['quantity']} "
+            f"but only {req['stock']} remaining.",
+            'danger'
         )
         cursor.close()
         return redirect(url_for('view_requests'))
@@ -644,11 +679,11 @@ def accept_request(request_id):
         WHERE request_id = %s
     ''', (request_id,))
 
-    # Decrease stock by 1
+    # Decrease stock by the requested quantity
     cursor.execute('''
-        UPDATE products SET stock = stock - 1
+        UPDATE products SET stock = stock - %s
         WHERE product_id = %s
-    ''', (req['product_id'],))
+    ''', (req['quantity'], req['product_id']))
 
     # Record the transaction
     cursor.execute('''
@@ -663,7 +698,7 @@ def accept_request(request_id):
     ''', (session['user_id'],))
 
     # ── If accepted count + 1 reaches stock, mark product Sold ──
-    if req['stock'] - 1 <= 0:
+    if req['stock'] - req['quantity'] <= 0:
         cursor.execute('''
             UPDATE products SET status = 'Sold'
             WHERE product_id = %s
@@ -804,6 +839,7 @@ def my_requests():
             r.request_id,
             r.status,
             r.requested_at,
+            r.quantity,
             p.product_id,
             p.name      AS product_name,
             p.price,

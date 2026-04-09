@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS requests (
     request_id   INT AUTO_INCREMENT PRIMARY KEY,
     product_id   INT NOT NULL,
     buyer_id     INT NOT NULL,
+    quantity     INT NOT NULL DEFAULT 1,
     status       ENUM('Pending','Accepted','Ongoing','Rejected','Completed')
                  DEFAULT 'Pending',
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
